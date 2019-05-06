@@ -1,6 +1,5 @@
 from tkinter import *
 from tkinter import messagebox # for some reason this is not included
-import time
 
 class FormApp():
     def __init__(self, *args, **kwargs):
