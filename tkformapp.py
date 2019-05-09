@@ -1,7 +1,8 @@
 from tkinter import *
+from tkinter import font
 from tkinter import messagebox # for some reason this is not included
 from tkinter import filedialog # for some reason this is not included
-
+import math
 
 class FormApp():
     def __init__(self, *args, **kwargs):
@@ -79,10 +80,15 @@ class FormApp():
             return valvar
         def make_fileinput():
             def getfile(btn, stringvar):
+                old_width = btn.winfo_width()
+                old_width_chars = math.floor(old_width / font.nametofont(btn['font']).measure('0')) - 2
+                # print(old_width_chars)
                 file = filedialog.askopenfilename(initialdir = "~",title = "Select file")
                 if len(file) > 0:
                     btn['anchor'] = E
                     stringvar.set(file)
+                    btn.configure(width=old_width_chars)
+                    # print('Setting width to {}'.format(old_width))
 
             valvar = StringVar(self.root, value='Select a file')
             b = Button(self.root, textvariable=valvar, anchor=CENTER, padx=10)
@@ -100,7 +106,6 @@ class FormApp():
 
         valvar = fcn_dict[field.widgettype]()
         return valvar
-
 
     def configure_window(self):
         # center window in screen
