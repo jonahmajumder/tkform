@@ -130,7 +130,12 @@ class FormApp():
     def getvalues(self):
         valuedict = {}
         for i in range(len(self.formvals)):
+            if self.formfields[i].widgettype == 'file':
+                if self.formvals[i].get() == 'Select a file':
+                    self.formvals[i].set('')
+            
             valuedict[self.formfields[i].label] = self.formvals[i].get()
+
         return valuedict
 
     def cancelfcn(self):
