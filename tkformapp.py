@@ -79,11 +79,12 @@ class FormApp():
             valvar = StringVar(self.root, value='')
             return valvar
         def make_fileinput():
-            def getfile(btn, stringvar):
+            def getfile(btn, stringvar, ftype):
                 old_width = btn.winfo_width()
                 old_width_chars = math.floor(old_width / font.nametofont(btn['font']).measure('0')) - 2
                 # print(old_width_chars)
-                file = filedialog.askopenfilename(initialdir = "~",title = "Select file")
+                file = filedialog.askopenfilename(initialdir = "~", title = "Select file",
+                    parent=self.root, filetypes=((ftype.upper() + ' Files', '*.' + ftype), ('All Files','*.*')))
                 if len(file) > 0:
                     btn['anchor'] = E
                     stringvar.set(file)
@@ -92,7 +93,7 @@ class FormApp():
 
             valvar = StringVar(self.root, value='Select a file')
             b = Button(self.root, textvariable=valvar, anchor=CENTER, padx=10)
-            b['command'] = lambda: getfile(b, valvar)
+            b['command'] = lambda: getfile(b, valvar, field.default)
             b.grid(row=row, column=col, sticky='NSEW')
             return valvar
 
@@ -190,7 +191,7 @@ if __name__ == '__main__':
     # example list of field objects
     fields = [
         FormField('Name', 'entry', 'Jonah'),
-        FormField('Recipient', 'file', '*'),
+        FormField('Recipient', 'file', 'pdf'),
         FormField('Total cost', 'entry', '$100'),
         FormField('Message', 'entry', 'Hi!'),
         FormField('Action', 'radiobutton', 'Send', ['Send', 'Display', 'Nothing'])
