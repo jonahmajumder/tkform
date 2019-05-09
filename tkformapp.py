@@ -1,5 +1,7 @@
 from tkinter import *
 from tkinter import messagebox # for some reason this is not included
+from tkinter import filedialog # for some reason this is not included
+
 
 class FormApp():
     def __init__(self, *args, **kwargs):
@@ -75,12 +77,25 @@ class FormApp():
         def make_listbox():
             valvar = StringVar(self.root, value='')
             return valvar
+        def make_fileinput():
+            def getfile(btn, stringvar):
+                file = filedialog.askopenfilename(initialdir = "~",title = "Select file")
+                if len(file) > 0:
+                    btn['anchor'] = E
+                    stringvar.set(file)
+
+            valvar = StringVar(self.root, value='Select a file')
+            b = Button(self.root, textvariable=valvar, anchor=CENTER, padx=10)
+            b['command'] = lambda: getfile(b, valvar)
+            b.grid(row=row, column=col, sticky='NSEW')
+            return valvar
 
         fcn_dict = {
             'entry': make_entry,
             'radiobutton': make_radiobutton,
             'checkbutton': make_checkbutton,
-            'listbox': make_listbox
+            'listbox': make_listbox,
+            'file': make_fileinput
         }
 
         valvar = fcn_dict[field.widgettype]()
@@ -139,7 +154,7 @@ class FormField():
         else:
             raise(Exception('First argument (label) must be string.'))
 
-        widgets = ['entry', 'radiobutton', 'checkbutton', 'listbox']
+        widgets = ['entry', 'radiobutton', 'checkbutton', 'listbox', 'file']
         if args[1].lower() in widgets:
             self.widgettype = args[1]
         else:
@@ -165,7 +180,7 @@ if __name__ == '__main__':
     # example list of field objects
     fields = [
         FormField('Name', 'entry', 'Jonah'),
-        FormField('Recipient', 'entry', 'My Friend'),
+        FormField('Recipient', 'file', '*'),
         FormField('Total cost', 'entry', '$100'),
         FormField('Message', 'entry', 'Hi!'),
         FormField('Action', 'radiobutton', 'Send', ['Send', 'Display', 'Nothing'])
