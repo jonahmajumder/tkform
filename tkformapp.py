@@ -1,7 +1,10 @@
 from tkinter import *
+# for some reason these are not included
 from tkinter import font
-from tkinter import messagebox # for some reason this is not included
-from tkinter import filedialog # for some reason this is not included
+from tkinter import messagebox
+from tkinter import filedialog
+import webbrowser
+import os
 import math
 
 class FormApp():
@@ -63,7 +66,9 @@ class FormApp():
             e.grid(row=row, column=col, sticky='NSEW')
             return valvar # does the returned stringvar still carry the entry value?
         def make_checkbutton():
-            valvar = StringVar(self.root, value='')
+            valvar = BooleanVar(self.root, value=field.default)
+            ch = Checkbutton(self.root, variable=valvar)
+            ch.grid(row=row, column=col, sticky='NSEW')
             return valvar
         def make_radiobutton():
             valvar = StringVar(self.root, value=field.default)
@@ -75,15 +80,21 @@ class FormApp():
                 r.grid(row=0, column=i, sticky='NSEW')
                 f.grid_columnconfigure(i, weight=1)
             return valvar
-        def make_listbox():
-            valvar = StringVar(self.root, value='')
+        def make_dropdown():
+            valvar = StringVar(self.root, value=field.default)
+            op = OptionMenu(self.root, valvar, *field.opts)
+            op.grid(row=row, column=col, sticky='NSEW')
             return valvar
         def make_fileinput():
-            def getfile(btn, stringvar, ftype):
+            def getfile(btn, stringvar, def_file):
+                [fldr, rest] = os.path.split(def_file)
+                [file, ext] = os.path.splitext(rest)
+                ftype = ext[1:] # remove dot
+
                 old_width = btn.winfo_width()
                 old_width_chars = math.floor(old_width / font.nametofont(btn['font']).measure('0')) - 2
                 # print(old_width_chars)
-                file = filedialog.askopenfilename(initialdir = "~", title = "Select file",
+                file = filedialog.askopenfilename(initialdir = fldr, title = "Select file",
                     parent=self.root, filetypes=((ftype.upper() + ' Files', '*.' + ftype), ('All Files','*.*')))
                 if len(file) > 0:
                     btn['anchor'] = E
@@ -96,13 +107,24 @@ class FormApp():
             b['command'] = lambda: getfile(b, valvar, field.default)
             b.grid(row=row, column=col, sticky='NSEW')
             return valvar
+        def make_link():
+            def open_url(url):
+                webbrowser.open_new(url)
+                return 0
+
+            valvar = StringVar(self.root, value=field.default)
+            l = Label(self.root, text=field.default, fg="blue", cursor="hand2")
+            l.grid(row=row, column=col, sticky='NSEW')
+            l.bind('<Button-1>', lambda e: open_url(field.default))
+            return valvar # does the returned stringvar still carry the entry value?
 
         fcn_dict = {
             'entry': make_entry,
             'radiobutton': make_radiobutton,
             'checkbutton': make_checkbutton,
-            'listbox': make_listbox,
-            'file': make_fileinput
+            'dropdown': make_dropdown,
+            'file': make_fileinput,
+            'link': make_link
         }
 
         valvar = fcn_dict[field.widgettype]()
@@ -140,8 +162,9 @@ class FormApp():
         return valuedict
 
     def cancelfcn(self):
-        self.values = {}
-        self.root.destroy()
+        if messagebox.askokcancel('Quit', 'Are you sure you want to quit?'):
+            self.values = {}
+            self.root.destroy()
 
     def submitfcn(self):
         self.values = self.getvalues()
@@ -159,21 +182,41 @@ class FormField():
         if len(args) < 3:
             raise(Exception('Not enough input args (expects label, widget type, default).'))
 
+        # check if the first argument is a string (as the label, it must be)
         strtype = type('')
         if type(args[0]) == strtype:
             self.label = args[0]
         else:
             raise(Exception('First argument (label) must be string.'))
 
-        widgets = ['entry', 'radiobutton', 'checkbutton', 'listbox', 'file']
+        # check that second argument specifies a supported widget type (i.e. one from this list)
+        widgets = ['entry', 'radiobutton', 'checkbutton', 'dropdown', 'file', 'link']
         if args[1].lower() in widgets:
             self.widgettype = args[1]
         else:
             raise(Exception('Invalid widget type.'))
 
+
         self.default = args[2]
 
-        if self.widgettype in ['radiobutton', 'listbox']:
+        # specific check for checkbutton: is the default value a boolean?
+        booltype = type(True)
+        boolexception = Exception('Could not parse default value to boolean.')
+        if self.widgettype is 'checkbutton':
+            if type(self.default) != booltype:
+                try:
+                    bool_attempt = eval(self.default.capitalize())
+                    if type(bool_attempt) != booltype:
+                        raise(boolexception)
+                except Exception:
+                    raise(boolexception)
+
+
+        # specific checks for radio or dropdown:
+        # - is there a set of options specified?
+        # - is that list more than one item long?
+        # - is the default one of the options?
+        if self.widgettype in ['radiobutton', 'dropdown']:
             if len(args) > 3:
                 if len(args[3]) > 1:
                     if self.default in args[3]:
@@ -191,16 +234,18 @@ if __name__ == '__main__':
     # example list of field objects
     fields = [
         FormField('Name', 'entry', 'Jonah'),
-        FormField('Recipient', 'file', 'pdf'),
+        FormField('Recipient', 'file', 'C:\\Users\\jo27625\\Desktop\\Purchasing\\*.pdf'),
         FormField('Total cost', 'entry', '$100'),
+        FormField('Test check', 'checkbutton', True),
+        FormField('Google', 'link', 'http://www.google.com'),
         FormField('Message', 'entry', 'Hi!'),
-        FormField('Action', 'radiobutton', 'Send', ['Send', 'Display', 'Nothing'])
+        FormField('Action', 'radiobutton', 'Send', ['Send', 'Display', 'Nothing']),
+        FormField('Action', 'dropdown', 'Send', ['Send', 'Display', 'Nothing'])
     ]
 
     app = FormApp(fields, title='Test App')
     vals = app.values
     print(vals)
-
 
 
 
